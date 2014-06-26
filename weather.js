@@ -86,7 +86,10 @@ function convertCityWeather()
                     index++;
                 }
             }
-            fs.writeFileSync('weather_forecast_' + CITY + '.csv', csv);
+            var oldName = 'weather_forecast_' + CITY + '.csv';
+            var newName = oldName + '.new';
+            fs.writeFileSync(newName, csv);
+            fs.renameSync(newName, oldName);
             setTimeout(convertCityWeather, 60 * 60 * 1000);
         });
 
