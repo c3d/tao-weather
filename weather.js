@@ -63,6 +63,7 @@ function convertCityWeather()
             var index = 0;
             var csv = '';
             var list = object.list;
+            var dayMin = 2000, dayMax = -2000;
             for (var idx in list)
             {
                 var forecast = list[idx];
@@ -76,13 +77,19 @@ function convertCityWeather()
                 var hour = dt.replace(dateRe, '$4');
                 var minute = dt.replace(dateRe, '$5');
                 var second = dt.replace(dateRe, '$6');
+                if (dayMin > main.temp_min)
+                    dayMin = main.temp_min;
+                if (dayMax < main.temp_max)
+                    dayMax = main.temp_max;
                 if (index < MAX_COUNT && hour.match(HOURS))
                 {
                     csv += index + ',' + year + ',' + month + ',' + day
                         + ',' + hour + ',' + minute + ',' + second
                         + ',"' + weather.icon + '","' + weather.main + '",'
-                        + main.temp + ',' + main.temp_min + ',' + main.temp_max
+                        + main.temp + ',' + dayMin + ',' + dayMax
                         + ',' + main.pressure + ',' + main.humidity + '\n';
+                    dayMin = 2000;
+                    dayMax = -2000;
                     index++;
                 }
             }
