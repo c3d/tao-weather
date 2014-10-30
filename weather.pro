@@ -5,11 +5,7 @@ include(../modules.pri)
 
 OTHER_FILES = weather.xl
 OTHER_FILES += doc/weather.doxy.h doc/Doxyfile.in
-OTHER_FILES += weather2.xl 
 OTHER_FILES += weather.js
-
-CRYPT_XL_SOURCES = weather2.xl
-include(../crypt_xl.pri)
 
 install_js.files = weather.js
 install_js.path = $${MODINSTPATH}

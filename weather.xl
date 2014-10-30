@@ -27,8 +27,161 @@ module_description
     website "http://www.taodyne.com"
     version 1.0
 
-import "weather2.xl.crypt"
-
 module_description "fr",
     name "Météo"
     description "Météo"
+
+
+import NodeJS
+
+
+
+// ============================================================================
+//
+//    Configuration parameters
+//
+// ============================================================================
+
+// Pattern for hours included in the data
+weather_hours       -> "00|12"
+weather_hours H     -> weather_hours := H
+
+// Maximum number of entries (8 days)
+weather_max_count   -> 16
+weather_max_count M -> weather_max_count := M
+
+// Font and size for temperatures
+weather_font        -> "Times"
+weather_font_size   -> 40
+weather_font_small  -> 24
+
+weather_font T, S1, S2 ->
+    weather_font := T
+    weather_font_size := S1
+    weather_font_small := S2
+
+
+
+// ============================================================================
+//
+//   Main entry points
+//
+// ============================================================================
+
+weather_process City:text, Body ->
+// ----------------------------------------------------------------------------
+//   Fetch data for a given city and process it with Body
+// ----------------------------------------------------------------------------
+    locally
+        nodejs_load "tao-weather", module_dir & "/weather.js"
+        nodejs_writeln "tao-weather",
+                       City & ":" & weather_hours & ":" & weather_max_count
+
+    locally
+        if file_exists(document_dir & "/weather_forecast_" & City & ".csv") then
+            load_csv document_dir & "/weather_forecast_" & City & ".csv", "weather_entry", Body
+            weather_count := weather_index
+        else
+            refresh 2
+
+
+weather_icons City:text ->
+// ----------------------------------------------------------------------------
+//   Fetch data for the given City and display it with icons
+// ----------------------------------------------------------------------------
+    weather_process City,
+        translate_x 128
+        image "Weather:" & weather_icon & ".png"
+
+
+weather_icons_and_text City:text ->
+// ----------------------------------------------------------------------------
+//   Fetch data for the given City and display it with icons
+// ----------------------------------------------------------------------------
+    weather_process City,
+        translate_x 128
+        image "Weather:" & weather_icon & ".png"
+
+        frame_texture 100, 100,
+            align_right
+            text_box 0, 0, 100, 100,
+                font weather_font
+                font_size weather_font_size
+                vertical_align 0.5
+                text integer weather_temperature & "°C"
+            text_box 0, 0, 100, 100,
+                font weather_font
+                font_size weather_font_small
+                color "white", 0.9
+                vertical_align 0.0
+                text integer weather_max_temperature & "°C"
+            text_box 0, 0, 100, 100,
+                font weather_font
+                font_size weather_font_small
+                color "white", 0.8
+                vertical_align 1.0
+                text integer weather_min_temperature & "°C"
+
+        locally
+           color "#444", 0.6
+           translate_z 10
+           rectangle 2, -2, 100, 100
+           color "#222"
+           translate_z 20
+           rectangle 0, 0, 100, 100
+
+
+
+
+// ============================================================================
+//
+//   Internal processing
+//
+// ============================================================================
+
+weather_index  -> 0
+weather_count  -> 0
+weather_year   -> 0
+weather_month  -> 0
+weather_day    -> 0
+weather_hour   -> 0
+weather_minute -> 0
+weather_second -> 0
+weather_icon   -> ""
+weather_description   -> ""
+weather_temperature   -> 0.0
+weather_min_temperature   -> 0.0
+weather_max_temperature   -> 0.0
+weather_pressure   -> 0.0
+weather_humidity   -> 0.0
+
+
+weather_entry Idx:integer,Year:integer,Month:integer,Day:integer,Hour:integer,Minute:integer,Second:integer,Icon:text,Description:text,Temp:real,Tmin:real,Tmax:real,Pressure:real,Humidity:real,Body ->
+// ----------------------------------------------------------------------------
+//   Process the forecast for today (that's the current data)
+// ----------------------------------------------------------------------------
+    weather_index               := Idx
+    weather_year                := Year
+    weather_month               := Month
+    weather_day                 := Day
+    weather_hour                := Hour
+    weather_minute              := Minute
+    weather_second              := Second
+    weather_icon                := Icon
+    weather_description         := Description
+    weather_temperature         := Temp
+    weather_min_temperature     := Tmin
+    weather_max_temperature     := Tmax
+    weather_pressure            := Pressure
+    weather_humidity            := Humidity
+    Body
+
+
+weather_entry MalformedInput ->
+// ----------------------------------------------------------------------------
+//   Malformed input in the CSV file (e.g. last line)
+// ----------------------------------------------------------------------------
+     false
+
+
+add_search_path "Weather:", module_dir & "/icons"
